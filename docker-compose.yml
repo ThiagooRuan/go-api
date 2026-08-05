@@ -1,0 +1,25 @@
+services:
+  go_db:
+    container_name: go_db
+    image: postgres:12
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 1234
+      POSTGRES_DB: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  go_api:
+    container_name: go_api
+    build: .
+    restart: unless-stopped
+    depends_on:
+      - go_db
+    ports:
+      - "8000:8000"
+
+volumes:
+  pgdata:
