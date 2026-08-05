@@ -101,3 +101,61 @@ func (pr *ProductRepository) GetProductById(id_product int) (*model.Product, err
 
 	return &produto, nil
 }
+
+func (pr *ProductRepository) UpdateProductByID(id_product int, product model.Product) (*model.Product, error) {
+	query, err := pr.connection.Prepare("UPDATE product SET product_name = $1, price = $2 WHERE id = $3 RETURNING id, product_name, price")
+	if err != nil {
+		return nil, err
+	}
+
+	defer query.Close()
+
+	var produto model.Product
+
+	err = query.QueryRow(
+		product.Name,
+		product.Price,
+		id_product,
+	).Scan(
+		&produto.ID,
+		&produto.Name,
+		&produto.Price,
+	)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, err
+		}
+
+		return nil, err
+	}
+
+	return &produto, nil
+}
+
+func (pr *ProductRepository) DeleteProductById(id_product int) (int, error) {
+	query, err := pr.connection.Prepare("DELETE FROM product WHERE id = $1")
+	if err != nil {
+		return 0, err
+	}
+
+	defer query.Close()
+
+	result, err := query.Exec(id_product)
+	if err != nil {
+		return 0, err
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return 0, err
+	}
+
+	fmt.Println("Rows affected:", rowsAffected)
+
+	if rowsAffected == 0 {
+		return 0, fmt.Errorf("produto não encontrado")
+	}
+
+	return id_product, nil
+}
